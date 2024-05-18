@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: be-online-bakery
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./src:/app/src
+    env_file:
+      - .env
+    # depends_on:
+    #   - db
+#   db:
+#     image: postgres:15.4-alpine3.18
+#     container_name: online-bakery-postgres
+#     ports:
+#       - 5999:5432
+#     environment:
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=postgres
+#       - POSTGRES_DB=prisma_db
+#     volumes:
+#       - online-bakery:/var/lib/postgresql/data
+# volumes:
+#   online-bakery: {}
