@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { LoginDto, RegisterDto } from "./dto/auth.dto";
 import { PrismaService } from "../shared/service/prisma.service";
 import * as bcrypt from "bcrypt";
@@ -10,10 +10,14 @@ import { PostgresErrorCode } from "../utils/constants";
 
 @Injectable()
 export class AuthService {
+  logger: Logger;
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.logger = new Logger(AuthService.name);
+  }
   async register(registerDto: RegisterDto) {
     try {
       registerDto.password = await bcrypt.hash(registerDto.password, 10);

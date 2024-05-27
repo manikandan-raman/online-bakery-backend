@@ -1,19 +1,26 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { SharedModule } from "./shared/shared.module";
 import { AuthModule } from "./auth/auth.module";
 import { ConfigModule } from "@nestjs/config";
-import { CategoriesModule } from "./core/categories/categories.module";
+import { AdminModule } from "./admin/admin.module";
+import { CoreModule } from "./core/core.module";
+import { LoggerMiddleware } from "./middlewares/logger.middleware";
 
 @Module({
   imports: [
     SharedModule,
     AuthModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    CategoriesModule,
+    AdminModule,
+    CoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes("*");
+  }
+}

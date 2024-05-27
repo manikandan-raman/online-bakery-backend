@@ -1,4 +1,5 @@
 export const PostgresErrorCode = {
   UNIQUE_VIOLATION: "P2002",
+  FOREIGN_KEY_VIOLATION: "P2003",
   UNIQUE_RESOURCE_NOT_FOUND: "P2025",
 };

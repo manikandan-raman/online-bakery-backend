@@ -17,113 +17,196 @@ enum Status {
   inactive
 }
 
-enum Order_Status {
+enum OrderStatus {
   success
   pending
   failure
 }
 
+enum CartStatus {
+  savelater
+  incart
+  orderplaced
+}
+
 model User {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName     String          @map("first_name")
+  lastName      String?         @map("last_name")
+  email         String          @unique
+  phone         String
+  password      String
+  role          UserRole        @default(user)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt() @map("updated_at")
+  address       UserAddress[]
+  ratingReviews RatingReviews[]
+  orders        Orders[]
+  payments      Payments[]
+  cart          Cart[]
+
   @@map("users")
-  id             String          @id @default(uuid())
-  first_name     String
-  last_name      String?
-  email          String          @unique
-  phone          String
-  password          String
-  role           UserRole        @default(user)
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt()
-  address        UserAddress[]
-  rating_reviews RatingReviews[]
-  orders         Orders[]
-  payments       Payments[] 
 }
 
 model UserAddress {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  addressLine1 String    @map("address_line_1")
+  addressLine2 String    @map("address_line_2")
+  cityId       String    @map("city_id") @db.Uuid
+  stateId      String    @map("state_id") @db.Uuid
+  countryId    String    @map("country_id") @db.Uuid
+  pincode      Int
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt() @map("updated_at")
+  user         User      @relation(fields: [userId], references: [id])
+  order        Orders[]
+  city         Cities    @relation(fields: [cityId], references: [id])
+  state        States    @relation(fields: [stateId], references: [id])
+  country      Countries @relation(fields: [countryId], references: [id])
+
   @@map("user_address")
-  id             String          @id @default(uuid())
-  user_id        String
-  address_line_1 String
-  address_line_2 String
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt()
-  user           User            @relation(fields: [user_id], references: [id])
-  order          Orders[]
 }
 
 model Categories {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  status    Status   @default(active)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+  dishes    Dishes[]
+
   @@map("categories")
-  id         String   @id @default(uuid())
-  name       String
-  status     Status   @default(active)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt()
-  dishes     Dishes[]
 }
 
 model Dishes {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  categoryId    String          @map("category_id") @db.Uuid
+  name          String
+  price         Int
+  status        Status          @default(active)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt() @map("updated_at")
+  ratingReviews RatingReviews[]
+  orderItems    OrderItems[]
+  categories    Categories      @relation(fields: [categoryId], references: [id])
+  Cart          Cart[]
+
   @@map("dishes")
-  id             String          @id @default(uuid())
-  category_id    String
-  name           String
-  price          Int
-  status         Status          @default(active)
-  created_at     DateTime        @default(now())
-  updated_at     DateTime        @updatedAt()
-  rating_reviews RatingReviews[]
-  order_items    Orders_Items[]
-  categories     Categories      @relation(fields: [category_id], references: [id])
 }
 
 model RatingReviews {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  dishId    String   @map("dish_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+  dishes    Dishes   @relation(fields: [dishId], references: [id])
+
+  @@unique([userId, dishId])
   @@map("rating_reviews")
-  id         String   @id @default(uuid())
-  dish_id    String
-  user_id    String
-  rating     Int
-  review     String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt()
-  user       User     @relation(fields: [user_id], references: [id])
-  dishes     Dishes   @relation(fields: [dish_id], references: [id])
+}
+
+model Cart {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  dishId    String   @map("dish_id") @db.Uuid
+  quantity  Int
+  price     Int
+  status    CartStatus  @default(incart)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+  dishes    Dishes   @relation(fields: [dishId], references: [id])
+
+  @@map("cart")
 }
 
 model Orders {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  addressId  String       @map("address_id") @db.Uuid
+  status     OrderStatus  @default(pending)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt() @map("updated_at")
+  user       User         @relation(fields: [userId], references: [id])
+  orderItems OrderItems[]
+  payment    Payments?
+  address    UserAddress  @relation(fields: [addressId], references: [id])
+
   @@map("orders")
-  id          String         @id @default(uuid())
-  user_id     String
-  address_id  String
-  status      Order_Status   @default(pending)
-  created_at  DateTime       @default(now())
-  updated_at  DateTime       @updatedAt()
-  user        User           @relation(fields: [user_id], references: [id])
-  order_items Orders_Items[]
-  payment     Payments?
-  address     UserAddress        @relation(fields: [address_id], references: [id])
 }
 
-model Orders_Items {
+model OrderItems {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  dishId    String   @map("dish_id") @db.Uuid
+  quantity  Int
+  price     Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+  order     Orders   @relation(fields: [orderId], references: [id])
+  dishes    Dishes   @relation(fields: [dishId], references: [id])
+
   @@map("order_items")
-  id         String   @id @default(uuid())
-  order_id   String
-  dish_id    String
-  quantity   Int
-  price      Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt()
-  order      Orders   @relation(fields: [order_id], references: [id])
-  dishes     Dishes   @relation(fields: [dish_id], references: [id])
 }
 
 model Payments {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  orderId       String      @unique @map("order_id") @db.Uuid
+  transactionId String      @map("transaction_id")
+  modeOfPayment String      @map("mode_of_payment")
+  status        OrderStatus @default(pending)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt() @map("updated_at")
+  user          User        @relation(fields: [userId], references: [id])
+  order         Orders      @relation(fields: [orderId], references: [id])
+
   @@map("payments")
-  id         String       @id @default(uuid())
-  user_id    String
-  order_id   String       @unique
-  status     Order_Status @default(pending)
-  created_at DateTime     @default(now())
-  updated_at DateTime     @updatedAt()
-  user        User        @relation(fields: [user_id], references: [id])
-  order     Orders        @relation(fields: [order_id], references: [id])
+}
+
+model Cities {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stateId     String        @map("state_id") @db.Uuid
+  countryId   String        @map("country_id") @db.Uuid
+  name        String
+  status      Status        @default(active)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt()
+  userAddress UserAddress[]
+  states      States        @relation(fields: [stateId], references: [id])
+  countries   Countries     @relation(fields: [countryId], references: [id])
+
+  @@map("cities")
+}
+
+model States {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  countryId    String        @map("country_id") @db.Uuid
+  name         String
+  status       Status        @default(active)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt()
+  user_address UserAddress[]
+  city         Cities[]
+  countries    Countries     @relation(fields: [countryId], references: [id])
+
+  @@map("states")
+}
+
+model Countries {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  status      Status        @default(active)
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt()
+  userAddress UserAddress[]
+  states      States[]
+  cities      Cities[]
+
+  @@map("countries")
 }
